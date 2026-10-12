@@ -12,7 +12,8 @@ defmodule OnceWeb.Navigation do
         <!-- LEFT: LOGO -->
         <div class="flex-1">
           <.link navigate={~p"/"} class="btn btn-ghost normal-case text-xl p-0 hover:bg-transparent">
-            <img src={~p"/images/once.png"} alt="Trace" class="h-10 w-auto" />
+            <img src={~p"/images/logos.png"} alt="The tribe
+            " class="h-10 w-auto" />
           </.link>
         </div>
 
@@ -38,11 +39,7 @@ defmodule OnceWeb.Navigation do
                     {@current_user.email}
                   </span>
                 </li>
-                <li>
-                  <.link navigate={~p"/"} class="py-2 mt-1">
-                    Profile
-                  </.link>
-                </li>
+
                 <li>
                   <.link href={~p"/sign-out"} class="py-2 text-error hover:bg-error/10">
                     Sign out

@@ -68,7 +68,8 @@ defmodule Once.Biotime.Employee do
                 else
                   first_name <> " " <> last_name
                 end
-              ), public?: true
+              ),
+              public?: true
 
     calculate :today_clock_in, :naive_datetime, {Once.Biotime.Calculations.ClockIn, []} do
       argument :start_date, :date, allow_nil?: true
