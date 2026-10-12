@@ -12,7 +12,7 @@ defmodule OnceWeb.Navigation do
         <!-- LEFT: LOGO -->
         <div class="flex-1">
           <.link navigate={~p"/"} class="btn btn-ghost normal-case text-xl p-0 hover:bg-transparent">
-            <img src={~p"/images/logos.png"} alt="The tribe
+            <img src={~p"/images/logos.webp"} alt="The tribe
             " class="h-10 w-auto" />
           </.link>
         </div>
