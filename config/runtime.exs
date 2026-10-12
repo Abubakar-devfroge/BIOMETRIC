@@ -8,7 +8,6 @@ config :once, :biotime,
   password: System.get_env("BIOTIME_PASSWORD", "Abuyezma44@abu")
 
 # ## Web Server Port & Process Handling
-# Automatically run the web server if PHX_SERVER is set or if running in prod release
 if System.get_env("PHX_SERVER") || config_env() == :prod do
   config :once, OnceWeb.Endpoint, server: true
 end
@@ -37,24 +36,25 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  # DigitalOcean databases typically require SSL. If DATABASE_URL specifies sslmode or ECTO_SSL=true,
-  # enable SSL options without breaking plain local postgres connections.
+  # Neon & Managed Postgres require SSL.
   use_ssl? =
     System.get_env("ECTO_SSL") in ~w(true 1) or
       String.contains?(database_url, "sslmode=require")
 
-  ssl_opts =
+  ssl_config =
     if use_ssl? do
       [ssl: true, ssl_opts: [verify: :verify_none]]
     else
-      []
+      [ssl: false]
     end
 
   config :once, Once.Repo,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: maybe_ipv6,
-    parameters: [timezone: "UTC"] ++ ssl_opts
+    [
+      url: database_url,
+      pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+      socket_options: maybe_ipv6,
+      parameters: [timezone: "UTC"]
+    ] ++ ssl_config
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
@@ -70,7 +70,7 @@ if config_env() == :prod do
     token_signing_secret: token_signing_secret
 
   host = System.get_env("PHX_HOST") || "example.com"
-  port = String.to_integer(System.get_env("PORT") || "8080")
+  port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :once, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
