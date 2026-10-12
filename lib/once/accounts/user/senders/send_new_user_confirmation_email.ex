@@ -12,9 +12,10 @@ defmodule Once.Accounts.User.Senders.SendNewUserConfirmationEmail do
 
   @impl true
   def send(user, token, opts) do
+    from_email = System.get_env("MAILER_FROM_EMAIL", "auth@craftinc.dev")
+
     new()
-    # TODO: Replace with your email
-    |> from({"noreply", "noreply@example.com"})
+    |> from({"Biometric", from_email})
     |> to(to_string(user.email))
     |> subject(subject(opts))
     |> html_body(body(token, opts))

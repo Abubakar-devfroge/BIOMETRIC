@@ -70,7 +70,7 @@ if config_env() == :prod do
   config :once,
     token_signing_secret: token_signing_secret
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host = System.get_env("PHX_HOST") || "biometric.fly.dev"
   port = String.to_integer(System.get_env("PORT") || "8080")
 
   config :once, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
@@ -82,4 +82,15 @@ if config_env() == :prod do
       port: port
     ],
     secret_key_base: secret_key_base
+
+  # ## Resend Mailer Configuration
+  resend_api_key =
+    System.get_env(
+      "RESEND_API_KEY",
+      "re_3cpTHx2H_H9mw3JCEByZagmzGhw45bUzh"
+    )
+
+  config :once, Once.Mailer,
+    adapter: Swoosh.Adapters.Resend,
+    api_key: resend_api_key
 end
