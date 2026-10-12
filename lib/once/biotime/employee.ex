@@ -15,6 +15,22 @@ defmodule Once.Biotime.Employee do
       primary? true
       upsert? true
       upsert_identity :unique_emp_code
+      accept :*
+
+      upsert_fields [
+        :first_name,
+        :last_name,
+        :department_name,
+        :area_name,
+        :enable_att,
+        :biotime_id
+      ]
+    end
+
+    create :upsert do
+      upsert? true
+      upsert_identity :unique_emp_code
+      accept :*
 
       upsert_fields [
         :first_name,
