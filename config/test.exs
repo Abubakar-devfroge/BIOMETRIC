@@ -1,4 +1,8 @@
 import Config
+config :once, Oban, testing: :manual
+config :once, token_signing_secret: "wiBzS/v2LF1r8AzyNyw0M+a+m4TSQk9Q"
+config :bcrypt_elixir, log_rounds: 1
+config :ash, policies: [show_policy_breakdowns?: true], disable_async?: true
 
 # Configure your database
 #

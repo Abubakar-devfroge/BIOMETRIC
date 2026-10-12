@@ -1,11 +1,13 @@
 import Config
+config :ash, policies: [show_policy_breakdowns?: true]
 
 # Configure your database
 config :once, Once.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "once_dev",
+  username: "trace",
+  password: "trace",
+  hostname: "127.0.0.1",
+  port: 5436,
+  database: "trace",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
@@ -53,7 +55,7 @@ config :once, OnceWeb.Endpoint,
 # different ports.
 
 # Enable dev routes for dashboard and mailbox
-config :once, dev_routes: true
+config :once, dev_routes: true, token_signing_secret: "Y/KMRYs3cWTLHEJph/YVxVS4EhMnaUfh"
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
@@ -75,3 +77,6 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# BioTime API Configuration
+config :once, :biotime_base_url, "https://thetribe.biotimecloud.com"

@@ -5,7 +5,15 @@ import Config
 # system starts, so it is typically used to load production configuration
 # and secrets from environment variables or elsewhere. Do not define
 # any compile-time configuration in here, as it won't be applied.
-# The block below contains prod specific runtime configuration.
+
+# ## BioTime Cloud Configuration
+# Loaded in all environments (dev, test, prod). In production, set these
+# environment variables on your server or container.
+config :once, :biotime,
+  base_url: System.get_env("BIOTIME_BASE_URL", "https://thetribe.biotimecloud.com"),
+  company: System.get_env("BIOTIME_COMPANY", "thetribe"),
+  email: System.get_env("BIOTIME_EMAIL", "abubakar@craftinc.dev"),
+  password: System.get_env("BIOTIME_PASSWORD", "Abuyezma44@abu")
 
 # ## Using releases
 #
@@ -83,6 +91,11 @@ if config_env() == :prod do
       ip: {0, 0, 0, 0, 0, 0, 0, 0}
     ],
     secret_key_base: secret_key_base
+
+  config :once,
+    token_signing_secret:
+      System.get_env("TOKEN_SIGNING_SECRET") ||
+        raise("Missing environment variable `TOKEN_SIGNING_SECRET`!")
 
   # ## SSL Support
   #
