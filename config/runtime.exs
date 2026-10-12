@@ -48,13 +48,14 @@ if config_env() == :prod do
       [ssl: false]
     end
 
-  config :once, Once.Repo,
-    [
-      url: database_url,
-      pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-      socket_options: maybe_ipv6,
-      parameters: [timezone: "UTC"]
-    ] ++ ssl_config
+  config :once,
+         Once.Repo,
+         [
+           url: database_url,
+           pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+           socket_options: maybe_ipv6,
+           parameters: [timezone: "UTC"]
+         ] ++ ssl_config
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
