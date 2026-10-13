@@ -34,7 +34,10 @@ defmodule Once.Biotime.SyncWorker do
         :ok
 
       {:ok, employees, punches} ->
-        Logger.info("BioTime sync succeeded: #{inspect(employees)} employees, #{inspect(punches)} punches processed.")
+        Logger.info(
+          "BioTime sync succeeded: #{inspect(employees)} employees, #{inspect(punches)} punches processed."
+        )
+
         :ok
 
       {:error, reason} ->
@@ -47,7 +50,10 @@ defmodule Once.Biotime.SyncWorker do
     end
   rescue
     e ->
-      Logger.error("BioTime sync worker encountered unhandled exception: #{Exception.format(:error, e, __STACKTRACE__)}")
+      Logger.error(
+        "BioTime sync worker encountered unhandled exception: #{Exception.format(:error, e, __STACKTRACE__)}"
+      )
+
       reraise e, __STACKTRACE__
   end
 end

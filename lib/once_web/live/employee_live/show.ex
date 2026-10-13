@@ -6,8 +6,7 @@ defmodule OnceWeb.EmployeeLive.Show do
     ~H"""
     <Layouts.app flash={@flash}>
       <.header>
-        Employee {@employee.id}
-        <:subtitle>This is a employee record from your database.</:subtitle>
+        Employee {@employee.emp_code}
 
         <:actions>
           <.button navigate={~p"/employees"}>
@@ -20,10 +19,6 @@ defmodule OnceWeb.EmployeeLive.Show do
       </.header>
 
       <.list>
-        <:item title="Id">{@employee.id}</:item>
-
-        <:item title="Emp code">{@employee.emp_code}</:item>
-
         <:item title="First name">{@employee.first_name}</:item>
 
         <:item title="Department name">{@employee.department_name}</:item>

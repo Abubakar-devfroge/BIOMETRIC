@@ -21,6 +21,7 @@ defmodule OnceWeb.EmployeeLive.Index do
      |> assign(:filter_shift, "all")
      |> assign(:page, 1)
      |> assign(:page_size, @page_size)
+     |> assign(:syncing, false)
      |> load_employees()}
   end
 
@@ -52,6 +53,30 @@ defmodule OnceWeb.EmployeeLive.Index do
   def handle_event("goto_page", %{"page" => page_str}, socket) do
     page = String.to_integer(page_str)
     {:noreply, socket |> assign(:page, page) |> load_employees()}
+  end
+
+  @impl true
+  def handle_event("sync_data", _params, socket) do
+    # Call your BioTime / ZKTeco sync function or worker here.
+    # e.g., Once.Biotime.SyncWorker.sync_now() or similar service call.
+    case apply_data_sync() do
+      :ok ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Data successfully synced from device.")
+         |> load_employees()}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Sync failed: #{reason}")}
+    end
+  end
+
+  # Replace this stub with your actual sync function call
+  defp apply_data_sync do
+    # Example: Once.Biotime.sync_punches()
+    :ok
   end
 
   defp load_employees(socket) do
@@ -169,121 +194,4 @@ defmodule OnceWeb.EmployeeLive.Index do
   end
 
   defp parse_date(_), do: nil
-
-  @impl true
-  def render(assigns) do
-    ~H"""
-    <Layouts.app flash={@flash}>
-      <div class="space-y-6">
-        <.header>
-          {@page_title}
-        </.header>
-
-        <div>
-          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <form phx-change="search" phx-submit="search" class="w-full lg:max-w-md">
-              <div class="relative">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <.input
-                  type="text"
-                  name="query"
-                  value={@search_query}
-                  placeholder="Search by code, employee name, department..."
-                  phx-debounce="150"
-                />
-              </div>
-            </form>
-
-            <form phx-change="filter_change" class="flex flex-wrap items-center gap-2.5">
-              <div class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5">
-                <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">From</span>
-                <.input
-                  type="date"
-                  name="start_date"
-                  value={@start_date}
-                />
-                <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">To</span>
-                <.input
-                  type="date"
-                  name="end_date"
-                  value={@end_date}
-                />
-              </div>
-
-              <select
-                name="shift"
-                class="py-2 pl-3 pr-8 text-sm font-medium text-zinc-800 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:text-zinc-200"
-              >
-                <option value="all" selected={@filter_shift == "all"}>All Statuses</option>
-                <option value="present" selected={@filter_shift == "present"}>Present</option>
-                <option value="in_building" selected={@filter_shift == "in_building"}>
-                  In Building
-                </option>
-                <option value="completed" selected={@filter_shift == "completed"}>Completed</option>
-                <option value="absent" selected={@filter_shift == "absent"}>Absent</option>
-              </select>
-            </form>
-          </div>
-        </div>
-
-        <.table
-          id="employees"
-          rows={@streams.employees}
-          row_click={fn {_id, employee} -> JS.navigate(~p"/employees/#{employee}") end}
-        >
-          <:col :let={{_id, employee}} label="Code">
-            {employee.emp_code}
-          </:col>
-
-          <:col :let={{_id, employee}} label="Name">
-            <div>{employee.full_name}</div>
-            <span :if={!employee.enable_att} class="text-xs font-semibold text-rose-500">
-              Attendance Disabled
-            </span>
-          </:col>
-
-          <:col :let={{_id, employee}} label="Department">
-            {employee.department_name || "—"}
-          </:col>
-
-          <:col :let={{_id, employee}} label="Clock In">
-            {if employee.today_clock_in,
-              do: Calendar.strftime(employee.today_clock_in, "%I:%M:%S %p"),
-              else: "—"}
-          </:col>
-
-          <:col :let={{_id, employee}} label="Clock Out">
-            {if employee.today_clock_out && employee.today_clock_out != employee.today_clock_in,
-              do: Calendar.strftime(employee.today_clock_out, "%I:%M:%S %p"),
-              else: "—"}
-          </:col>
-        </.table>
-
-        <div :if={@total_pages > 1} class="flex items-center justify-center gap-1.5 py-4">
-          <button
-            :for={p <- 1..@total_pages}
-            type="button"
-            phx-click="goto_page"
-            phx-value-page={p}
-            class={[
-              "btn btn-sm min-w-8",
-              if(p == @page, do: "btn-primary", else: "btn-ghost")
-            ]}
-          >
-            {p}
-          </button>
-        </div>
-      </div>
-    </Layouts.app>
-    """
-  end
 end

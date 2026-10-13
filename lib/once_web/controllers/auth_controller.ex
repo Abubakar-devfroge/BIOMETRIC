@@ -9,7 +9,7 @@ defmodule OnceWeb.AuthController do
       case activity do
         {:confirm_new_user, :confirm} -> "Your email address has now been confirmed"
         {:password, :reset} -> "Your password has successfully been reset"
-        _ -> "You are now signed in"
+        _ -> "Welcome!"
       end
 
     conn
