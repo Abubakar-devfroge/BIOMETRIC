@@ -76,15 +76,6 @@ defmodule Once.Biotime.Punch do
     end
   end
 
-  calculations do
-    @doc """
-    Calculates true Nairobi time (UTC+3) directly from inserted_at.
-    Guarantees reliable timestamps even if physical hardware clocks drift.
-    """
-    calculate :effective_punch_time, :naive_datetime, expr(datetime_add(inserted_at, 3, :hour)),
-      public?: true
-  end
-
   identities do
     identity :unique_biotime_id, [:biotime_id]
   end

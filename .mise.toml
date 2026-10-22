@@ -1,0 +1,4 @@
+# Project mise config: loads .env into shells so mix test / phx.server / agents
+# always run with BioTime + mailer credentials present (prod uses fly secrets).
+[env]
+_.file = ".env"

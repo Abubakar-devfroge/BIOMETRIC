@@ -5,7 +5,7 @@ defmodule OnceWeb.AttendanceLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    today = Date.utc_today()
+    today = Once.Time.nairobi_today()
 
     socket =
       socket

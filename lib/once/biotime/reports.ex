@@ -15,14 +15,17 @@ defmodule Once.Biotime.Reports do
   Builds daily sessions for each employee across a date range.
   Filters double-taps and resolves true clock-in and clock-out timestamps.
   """
+  def daily_attendance(start_date, end_date \\ nil)
+
   def daily_attendance(start_date, end_date) do
-    start_dt = NaiveDateTime.new!(start_date, ~T[00:00:00])
-    end_dt = NaiveDateTime.new!(end_date, ~T[23:59:59])
+    {start_dt, end_dt} = Once.Time.date_range_bounds(start_date, end_date)
 
     Punch
     |> Ash.Query.filter(punch_time >= ^start_dt and punch_time <= ^end_dt)
     |> Ash.Query.load(:employee)
     |> Ash.read!()
+    # Normalize every punch to *reported* time (terminal drift correction)
+    |> Enum.map(fn p -> %{p | punch_time: Once.Time.to_reported(p.punch_time)} end)
     |> Enum.group_by(fn p -> {p.emp_code, NaiveDateTime.to_date(p.punch_time)} end)
     |> Enum.map(fn {{emp_code, date}, day_punches} ->
       sorted_punches = Enum.sort_by(day_punches, & &1.punch_time, NaiveDateTime)
@@ -56,8 +59,7 @@ defmodule Once.Biotime.Reports do
   Employees active for attendance tracking (`enable_att: true`) who have zero punches on `target_date`.
   """
   def absent_on_date(target_date) do
-    start_dt = NaiveDateTime.new!(target_date, ~T[00:00:00])
-    end_dt = NaiveDateTime.new!(target_date, ~T[23:59:59])
+    {start_dt, end_dt} = Once.Time.date_range_bounds(target_date)
 
     present_codes =
       Punch
@@ -107,8 +109,7 @@ defmodule Once.Biotime.Reports do
   Employees who never logged a single punch across an entire calendar month or date range.
   """
   def inactive_employees(start_date, end_date) do
-    start_dt = NaiveDateTime.new!(start_date, ~T[00:00:00])
-    end_dt = NaiveDateTime.new!(end_date, ~T[23:59:59])
+    {start_dt, end_dt} = Once.Time.date_range_bounds(start_date, end_date)
 
     active_codes =
       Punch

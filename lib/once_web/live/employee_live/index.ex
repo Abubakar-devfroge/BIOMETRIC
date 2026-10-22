@@ -7,9 +7,7 @@ defmodule OnceWeb.EmployeeLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     today_iso =
-      DateTime.utc_now()
-      |> DateTime.add(3 * 3600, :second)
-      |> DateTime.to_date()
+      Once.Time.nairobi_today()
       |> Date.to_iso8601()
 
     {:ok,
@@ -57,26 +55,26 @@ defmodule OnceWeb.EmployeeLive.Index do
 
   @impl true
   def handle_event("sync_data", _params, socket) do
-    # Call your BioTime / ZKTeco sync function or worker here.
-    # e.g., Once.Biotime.SyncWorker.sync_now() or similar service call.
-    case apply_data_sync() do
-      :ok ->
+    send(self(), :run_delta_sync)
+    {:noreply, assign(socket, :syncing, true)}
+  end
+
+  @impl true
+  def handle_info(:run_delta_sync, socket) do
+    case Once.Biotime.Sync.sync_recent() do
+      {:ok, count} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Data successfully synced from device.")
+         |> assign(:syncing, false)
+         |> put_flash(:info, "Sync complete: #{count} records updated.")
          |> load_employees()}
 
       {:error, reason} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Sync failed: #{reason}")}
+         |> assign(:syncing, false)
+         |> put_flash(:error, "Sync failed: #{inspect(reason)}")}
     end
-  end
-
-  # Replace this stub with your actual sync function call
-  defp apply_data_sync do
-    # Example: Once.Biotime.sync_punches()
-    :ok
   end
 
   defp load_employees(socket) do

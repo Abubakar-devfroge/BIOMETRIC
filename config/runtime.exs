@@ -1,11 +1,20 @@
 import Config
 
 # ## BioTime Cloud Configuration
+# Credentials come from the environment only — fly secrets in prod, .env (via
+# mise) in dev/test. No defaults: this fails loudly instead of silently
+# shipping real credentials in the repo.
 config :once, :biotime,
   base_url: System.get_env("BIOTIME_BASE_URL", "https://thetribe.biotimecloud.com"),
-  company: System.get_env("BIOTIME_COMPANY", "thetribe"),
-  email: System.get_env("BIOTIME_EMAIL", "abubakar@craftinc.dev"),
-  password: System.get_env("BIOTIME_PASSWORD", "Abuyezma44@abu")
+  company: System.fetch_env!("BIOTIME_COMPANY"),
+  email: System.fetch_env!("BIOTIME_EMAIL"),
+  password: System.fetch_env!("BIOTIME_PASSWORD"),
+  # Correction for terminals whose physical clock runs ahead of true time.
+  # Punches are shifted this many seconds backward for display/reporting, and
+  # day boundaries shift forward by the same amount. Keep in sync with the
+  # previously-hardcoded BIOTIME window shift (2h 28m 18s = 8898s).
+  punch_adjustment_seconds:
+    String.to_integer(System.get_env("BIOTIME_PUNCH_ADJUSTMENT_SECONDS", "8898"))
 
 # ## Web Server Port & Process Handling
 if System.get_env("PHX_SERVER") || config_env() == :prod do
@@ -84,13 +93,7 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   # ## Resend Mailer Configuration
-  resend_api_key =
-    System.get_env(
-      "RESEND_API_KEY",
-      "re_3cpTHx2H_H9mw3JCEByZagmzGhw45bUzh"
-    )
-
   config :once, Once.Mailer,
     adapter: Swoosh.Adapters.Resend,
-    api_key: resend_api_key
+    api_key: System.fetch_env!("RESEND_API_KEY")
 end

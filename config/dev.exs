@@ -78,5 +78,5 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
-# BioTime API Configuration
-config :once, :biotime_base_url, "https://thetribe.biotimecloud.com"
+# BioTime API base URL lives in runtime.exs (`:once, :biotime`); override it
+# with the BIOTIME_BASE_URL env var, never here.

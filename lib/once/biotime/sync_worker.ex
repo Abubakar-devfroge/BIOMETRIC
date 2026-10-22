@@ -16,28 +16,17 @@ defmodule Once.Biotime.SyncWorker do
     Logger.info("Starting BioTime sync worker (attempt #{attempt}, args: #{inspect(args)})...")
 
     sync_result =
-      cond do
-        Map.get(args, "full") == true or Map.get(args, "full_sync") == true ->
-          if function_exported?(Once.Biotime.Sync, :sync_all, 0) do
-            Once.Biotime.Sync.sync_all()
-          else
-            Once.Biotime.Sync.sync_recent()
-          end
-
-        true ->
-          Once.Biotime.Sync.sync_recent()
-      end
+      if Map.get(args, "full") == true or Map.get(args, "full_sync") == true,
+        do: Once.Biotime.Sync.sync_all(),
+        else: Once.Biotime.Sync.sync_recent()
 
     case sync_result do
-      {:ok, count} ->
-        Logger.info("BioTime background sync succeeded: #{inspect(count)} records processed.")
+      {:ok, %{employees: employees, punches: punches}} ->
+        Logger.info("BioTime full sync succeeded: #{employees} employees, #{punches} punches.")
         :ok
 
-      {:ok, employees, punches} ->
-        Logger.info(
-          "BioTime sync succeeded: #{inspect(employees)} employees, #{inspect(punches)} punches processed."
-        )
-
+      {:ok, count} ->
+        Logger.info("BioTime background sync succeeded: #{count} records processed.")
         :ok
 
       {:error, reason} ->
@@ -45,8 +34,8 @@ defmodule Once.Biotime.SyncWorker do
         {:error, reason}
 
       other ->
-        Logger.info("BioTime background sync completed with return value: #{inspect(other)}")
-        :ok
+        Logger.error("BioTime sync worker got unexpected return value: #{inspect(other)}")
+        {:error, {:unexpected_result, other}}
     end
   rescue
     e ->
