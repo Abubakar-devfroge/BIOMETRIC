@@ -23,7 +23,7 @@ defmodule Once.Biotime.Reports do
     Punch
     |> Ash.Query.filter(punch_time >= ^start_dt and punch_time <= ^end_dt)
     |> Ash.Query.select([:emp_code, :punch_time])
-    |> Ash.Query.load(:employee)
+    |> Ash.Query.load(employee: [:emp_code, :first_name, :department_name])
     |> Ash.read!()
     # Normalize every punch to *reported* time (terminal drift correction)
     |> Enum.map(fn p -> %{p | punch_time: Once.Time.to_reported(p.punch_time)} end)
@@ -66,17 +66,42 @@ defmodule Once.Biotime.Reports do
   end
 
   @doc """
+  Count of attendance-enabled employees with zero punches on `target_date`.
+  Cheaper than `absent_on_date/1` where only the total is needed.
+  """
+  def absent_count_on_date(target_date) do
+    {start_dt, end_dt} = Once.Time.date_range_bounds(target_date)
+
+    present_codes = MapSet.to_list(present_codes_between(start_dt, end_dt))
+
+    query =
+      case present_codes do
+        [] -> Ash.Query.filter(Employee, enable_att == true)
+        codes -> Ash.Query.filter(Employee, enable_att == true and emp_code not in ^codes)
+      end
+
+    query
+    |> Ash.Query.select([])
+    |> Ash.count!()
+  end
+
+  @doc """
   Employees active for attendance tracking (`enable_att: true`) who have zero punches on `target_date`.
   """
   def absent_on_date(target_date) do
     {start_dt, end_dt} = Once.Time.date_range_bounds(target_date)
 
-    present_codes = present_codes_between(start_dt, end_dt)
+    present_codes = MapSet.to_list(present_codes_between(start_dt, end_dt))
 
-    Employee
-    |> Ash.Query.filter(enable_att == true)
+    query =
+      case present_codes do
+        [] -> Ash.Query.filter(Employee, enable_att == true)
+        codes -> Ash.Query.filter(Employee, enable_att == true and emp_code not in ^codes)
+      end
+
+    query
+    |> Ash.Query.select([:emp_code, :first_name, :department_name])
     |> Ash.read!()
-    |> Enum.reject(fn emp -> MapSet.member?(present_codes, emp.emp_code) end)
     |> Enum.map(fn emp ->
       %{
         emp_code: emp.emp_code,
@@ -116,12 +141,17 @@ defmodule Once.Biotime.Reports do
   def inactive_employees(start_date, end_date) do
     {start_dt, end_dt} = Once.Time.date_range_bounds(start_date, end_date)
 
-    active_codes = present_codes_between(start_dt, end_dt)
+    active_codes = MapSet.to_list(present_codes_between(start_dt, end_dt))
 
-    Employee
-    |> Ash.Query.filter(enable_att == true)
+    query =
+      case active_codes do
+        [] -> Ash.Query.filter(Employee, enable_att == true)
+        codes -> Ash.Query.filter(Employee, enable_att == true and emp_code not in ^codes)
+      end
+
+    query
+    |> Ash.Query.select([:emp_code, :first_name, :department_name])
     |> Ash.read!()
-    |> Enum.reject(fn emp -> MapSet.member?(active_codes, emp.emp_code) end)
     |> Enum.map(fn emp ->
       %{
         emp_code: emp.emp_code,

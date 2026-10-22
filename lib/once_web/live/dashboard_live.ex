@@ -385,7 +385,7 @@ defmodule OnceWeb.DashboardLive do
       employees: employees_count,
       present: length(daily),
       in_building: Enum.count(daily, & &1.missing_clock_out?),
-      absent: length(Reports.absent_on_date(today))
+      absent: Reports.absent_count_on_date(today)
     }
 
     activity =

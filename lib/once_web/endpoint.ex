@@ -15,6 +15,15 @@ defmodule OnceWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # Static fonts never change payload between deploys unless re-digested,
+  # so serve them with an immutable cache to avoid repeat downloads.
+  plug Plug.Static,
+    at: "/fonts",
+    from: {:once, "priv/static/fonts"},
+    gzip: not code_reloading?,
+    only: ["InterVariable.woff2"],
+    cache_control_for_etags: "public, max-age=31536000, immutable"
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # When code reloading is disabled (e.g., in production),
