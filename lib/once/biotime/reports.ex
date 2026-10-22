@@ -22,6 +22,7 @@ defmodule Once.Biotime.Reports do
 
     Punch
     |> Ash.Query.filter(punch_time >= ^start_dt and punch_time <= ^end_dt)
+    |> Ash.Query.select([:emp_code, :punch_time])
     |> Ash.Query.load(:employee)
     |> Ash.read!()
     # Normalize every punch to *reported* time (terminal drift correction)
@@ -55,18 +56,22 @@ defmodule Once.Biotime.Reports do
     |> Enum.filter(& &1.missing_clock_out?)
   end
 
+  defp present_codes_between(start_dt, end_dt) do
+    Punch
+    |> Ash.Query.filter(punch_time >= ^start_dt and punch_time <= ^end_dt)
+    |> Ash.Query.select([:emp_code])
+    |> Ash.Query.distinct([:emp_code])
+    |> Ash.read!()
+    |> MapSet.new(& &1.emp_code)
+  end
+
   @doc """
   Employees active for attendance tracking (`enable_att: true`) who have zero punches on `target_date`.
   """
   def absent_on_date(target_date) do
     {start_dt, end_dt} = Once.Time.date_range_bounds(target_date)
 
-    present_codes =
-      Punch
-      |> Ash.Query.filter(punch_time >= ^start_dt and punch_time <= ^end_dt)
-      |> Ash.read!()
-      |> Enum.map(& &1.emp_code)
-      |> MapSet.new()
+    present_codes = present_codes_between(start_dt, end_dt)
 
     Employee
     |> Ash.Query.filter(enable_att == true)
@@ -111,12 +116,7 @@ defmodule Once.Biotime.Reports do
   def inactive_employees(start_date, end_date) do
     {start_dt, end_dt} = Once.Time.date_range_bounds(start_date, end_date)
 
-    active_codes =
-      Punch
-      |> Ash.Query.filter(punch_time >= ^start_dt and punch_time <= ^end_dt)
-      |> Ash.read!()
-      |> Enum.map(& &1.emp_code)
-      |> MapSet.new()
+    active_codes = present_codes_between(start_dt, end_dt)
 
     Employee
     |> Ash.Query.filter(enable_att == true)

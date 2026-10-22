@@ -5,6 +5,8 @@ defmodule OnceWeb.DashboardLive do
   """
   use OnceWeb, :live_view
 
+  require Ash.Query
+
   alias Once.Biotime.{Employee, Reports, Sync}
 
   @impl true
@@ -373,8 +375,14 @@ defmodule OnceWeb.DashboardLive do
     today = Once.Time.nairobi_today()
     daily = Reports.daily_attendance(today, today)
 
+    employees_count =
+      Employee
+      |> Ash.Query.filter(enable_att == true)
+      |> Ash.Query.select([])
+      |> Ash.count!()
+
     stats = %{
-      employees: Employee |> Ash.read!() |> Enum.count(& &1.enable_att),
+      employees: employees_count,
       present: length(daily),
       in_building: Enum.count(daily, & &1.missing_clock_out?),
       absent: length(Reports.absent_on_date(today))
