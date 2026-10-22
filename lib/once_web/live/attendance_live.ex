@@ -9,6 +9,7 @@ defmodule OnceWeb.AttendanceLive do
 
     socket =
       socket
+      |> assign(:page_title, "Attendance")
       |> assign(:active_tab, :daily)
       |> assign(:target_date, today)
       |> assign(:start_date, Date.beginning_of_month(today))
@@ -95,172 +96,158 @@ defmodule OnceWeb.AttendanceLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <%!-- Top Action Header --%>
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-zinc-200">
+    <div class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <Layouts.flash_group flash={@flash} />
+
+      <%!-- Header --%>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight text-zinc-900 font-mono">
-            ATTENDANCE // BIOTIME
+          <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Attendance
           </h1>
-          <p class="text-xs text-zinc-500 mt-1 uppercase tracking-wider">
-            Real-time biometric logs & payroll aggregates
+          <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Real-time biometric logs, absentees & payroll aggregates
           </p>
         </div>
 
-        <div class="mt-4 sm:mt-0 flex items-center gap-3">
-          <button
-            phx-click="trigger_sync"
-            disabled={@syncing?}
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 transition border border-zinc-900"
+        <button
+          type="button"
+          phx-click="trigger_sync"
+          disabled={@syncing?}
+          class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm font-semibold text-zinc-800 shadow-xs transition-colors duration-150 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+        >
+          <svg
+            :if={@syncing?}
+            class="h-4 w-4 animate-spin"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <span :if={@syncing?} class="animate-spin text-sm">⟳</span>
-            {if @syncing?, do: "Syncing...", else: "Pull Sync Now"}
-          </button>
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+          <span :if={!@syncing?}>
+            <.icon name="hero-arrow-path" class="size-4" />
+          </span>
+          {if @syncing?, do: "Syncing...", else: "Sync data"}
+        </button>
+      </div>
+
+      <%!-- Tabs + filters --%>
+      <div class="mt-6">
+        <div class="flex flex-col gap-4 border-b border-zinc-200 dark:border-zinc-800 md:flex-row md:items-center md:justify-between">
+          <nav class="-mb-px flex gap-6" aria-label="Attendance tabs">
+            <button
+              :for={
+                {tab, label} <- [
+                  {:daily, "Daily attendance"},
+                  {:absent, "Absentees"},
+                  {:summary, "Range summary"}
+                ]
+              }
+              phx-click="switch_tab"
+              phx-value-tab={tab}
+              class={[
+                "-mb-px cursor-pointer whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors",
+                @active_tab == tab &&
+                  "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400",
+                @active_tab != tab &&
+                  "border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-300"
+              ]}
+            >
+              {label}
+            </button>
+          </nav>
+
+          <div class="flex flex-wrap items-center gap-2 pb-3 text-sm">
+            <%= if @active_tab in [:daily, :absent] do %>
+              <form phx-change="change_date" class="flex items-center gap-2">
+                <label for="attendance-date" class="text-zinc-500 dark:text-zinc-400">Date</label>
+                <input
+                  id="attendance-date"
+                  type="date"
+                  name="date"
+                  value={Date.to_iso8601(@target_date)}
+                  class="cursor-pointer rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </form>
+            <% else %>
+              <form phx-change="change_range" class="flex items-center gap-2">
+                <label class="text-zinc-500 dark:text-zinc-400">From</label>
+                <input
+                  type="date"
+                  name="start_date"
+                  value={Date.to_iso8601(@start_date)}
+                  class="cursor-pointer rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+                <label class="text-zinc-500 dark:text-zinc-400">To</label>
+                <input
+                  type="date"
+                  name="end_date"
+                  value={Date.to_iso8601(@end_date)}
+                  class="cursor-pointer rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </form>
+            <% end %>
+          </div>
         </div>
       </div>
 
-      <%!-- Navigation Tabs & Controls --%>
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-zinc-50 p-2.5 border border-zinc-200">
-        <nav class="flex gap-1" aria-label="Tabs">
-          <button
-            phx-click="switch_tab"
-            phx-value-tab="daily"
-            class={[
-              "px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition",
-              if(@active_tab == :daily,
-                do: "bg-white text-zinc-900 shadow-sm border border-zinc-200",
-                else: "text-zinc-500 hover:text-zinc-900"
-              )
-            ]}
-          >
-            Daily Attendance
-          </button>
-
-          <button
-            phx-click="switch_tab"
-            phx-value-tab="absent"
-            class={[
-              "px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition",
-              if(@active_tab == :absent,
-                do: "bg-white text-zinc-900 shadow-sm border border-zinc-200",
-                else: "text-zinc-500 hover:text-zinc-900"
-              )
-            ]}
-          >
-            Absentees
-          </button>
-
-          <button
-            phx-click="switch_tab"
-            phx-value-tab="summary"
-            class={[
-              "px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition",
-              if(@active_tab == :summary,
-                do: "bg-white text-zinc-900 shadow-sm border border-zinc-200",
-                else: "text-zinc-500 hover:text-zinc-900"
-              )
-            ]}
-          >
-            Monthly / Range Summary
-          </button>
-        </nav>
-
-        <%!-- Contextual Filters --%>
-        <div class="flex items-center gap-2 text-xs">
-          <%= if @active_tab in [:daily, :absent] do %>
-            <form phx-change="change_date" class="flex items-center gap-2">
-              <label for="date-select" class="text-zinc-500 uppercase font-mono">Date:</label>
-              <input
-                id="date-select"
-                type="date"
-                name="date"
-                value={Date.to_iso8601(@target_date)}
-                class="px-2 py-1 text-xs border border-zinc-300 font-mono bg-white focus:outline-none focus:border-zinc-900"
-              />
-            </form>
-          <% else %>
-            <form phx-change="change_range" class="flex items-center gap-2">
-              <label class="text-zinc-500 uppercase font-mono">From:</label>
-              <input
-                type="date"
-                name="start_date"
-                value={Date.to_iso8601(@start_date)}
-                class="px-2 py-1 text-xs border border-zinc-300 font-mono bg-white focus:outline-none focus:border-zinc-900"
-              />
-              <label class="text-zinc-500 uppercase font-mono">To:</label>
-              <input
-                type="date"
-                name="end_date"
-                value={Date.to_iso8601(@end_date)}
-                class="px-2 py-1 text-xs border border-zinc-300 font-mono bg-white focus:outline-none focus:border-zinc-900"
-              />
-            </form>
-          <% end %>
-        </div>
-      </div>
-
-      <%!-- Table View: Daily Attendance --%>
-      <div :if={@active_tab == :daily} class="border border-zinc-200 bg-white">
-        <div class="px-4 py-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center text-xs">
-          <span class="font-mono uppercase text-zinc-600">
-            Records on {Calendar.strftime(@target_date, "%d %b %Y")}: {length(@daily_records)}
+      <%!-- Daily attendance --%>
+      <div
+        :if={@active_tab == :daily}
+        class="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <div class="border-b border-zinc-200 px-5 py-4 text-sm dark:border-zinc-800">
+          <span class="text-zinc-500 dark:text-zinc-400">
+            {length(@daily_records)} records on
+            <span class="font-medium text-zinc-900 dark:text-zinc-100">
+              {Calendar.strftime(@target_date, "%d %b %Y")}
+            </span>
           </span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-zinc-100 text-zinc-600 uppercase border-b border-zinc-200">
-              <tr>
-                <th class="px-4 py-2.5">Code</th>
-                <th class="px-4 py-2.5">Employee</th>
-                <th class="px-4 py-2.5">Dept</th>
-                <th class="px-4 py-2.5">Clock In</th>
-                <th class="px-4 py-2.5">Clock Out</th>
-                <th class="px-4 py-2.5 text-right">Hours</th>
-                <th class="px-4 py-2.5 text-center">Punches</th>
-                <th class="px-4 py-2.5">Status</th>
+          <table class="w-full text-sm text-left text-zinc-900 dark:text-zinc-100">
+            <thead>
+              <tr class="border-b border-zinc-200 bg-zinc-50 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-400">
+                <th class="px-5 py-3">Code</th>
+                <th class="px-5 py-3">Employee</th>
+                <th class="px-5 py-3">Department</th>
+                <th class="px-5 py-3">Clock in</th>
+                <th class="px-5 py-3">Clock out</th>
+                <th class="px-5 py-3 text-right">Hours</th>
+                <th class="px-5 py-3 text-center">Punches</th>
+                <th class="px-5 py-3">Status</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-zinc-200 text-zinc-800">
-              <tr :for={row <- @daily_records} class="hover:bg-zinc-50 transition">
-                <td class="px-4 py-2 font-bold text-zinc-900">{row.emp_code}</td>
-                <td class="px-4 py-2 font-sans font-medium text-zinc-900">{row.name}</td>
-                <td class="px-4 py-2 text-zinc-500">{row.department || "—"}</td>
-                <td class="px-4 py-2">{Calendar.strftime(row.clock_in, "%H:%M:%S")}</td>
-                <td class="px-4 py-2">
+            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tr
+                :for={row <- @daily_records}
+                class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              >
+                <td class="px-5 py-3.5 font-medium tabular-nums">{row.emp_code}</td>
+                <td class="px-5 py-3.5 font-medium">{row.name}</td>
+                <td class="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{row.department || "—"}</td>
+                <td class="px-5 py-3.5 tabular-nums">
+                  {Calendar.strftime(row.clock_in, "%H:%M:%S")}
+                </td>
+                <td class="px-5 py-3.5 tabular-nums">
                   {if row.clock_out, do: Calendar.strftime(row.clock_out, "%H:%M:%S"), else: "—"}
                 </td>
-                <td class="px-4 py-2 text-right font-semibold">
-                  {row.hours_worked}
+                <td class="px-5 py-3.5 text-right font-medium tabular-nums">{row.hours_worked}</td>
+                <td class="px-5 py-3.5 text-center tabular-nums text-zinc-500 dark:text-zinc-400">
+                  {row.total_punches}
                 </td>
-                <td class="px-4 py-2 text-center text-zinc-500">{row.total_punches}</td>
-                <td class="px-4 py-2">
-                  <span class={[
-                    "px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                    case row.status do
-                      :normal ->
-                        "bg-zinc-100 text-zinc-700"
-
-                      :multiple_punches ->
-                        "bg-blue-50 text-blue-700 border border-blue-200"
-
-                      :duplicate_checkin_no_checkout ->
-                        "bg-amber-50 text-amber-700 border border-amber-200"
-
-                      :single_punch ->
-                        "bg-rose-50 text-rose-700 border border-rose-200"
-                    end
-                  ]}>
-                    {case row.status do
-                      :normal -> "OK"
-                      :multiple_punches -> "Multiple Hits"
-                      :duplicate_checkin_no_checkout -> "Double-tap / Incomplete"
-                      :single_punch -> "Missing Exit"
-                    end}
-                  </span>
+                <td class="px-5 py-3.5">
+                  <.status_badge status={row.status} />
                 </td>
               </tr>
               <tr :if={@daily_records == []}>
-                <td colspan="8" class="px-4 py-8 text-center text-zinc-400">
+                <td colspan="8" class="px-5 py-12 text-center text-zinc-400 dark:text-zinc-500">
                   No attendance records logged for this date.
                 </td>
               </tr>
@@ -269,39 +256,54 @@ defmodule OnceWeb.AttendanceLive do
         </div>
       </div>
 
-      <%!-- Table View: Absentees --%>
-      <div :if={@active_tab == :absent} class="border border-zinc-200 bg-white">
-        <div class="px-4 py-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center text-xs">
-          <span class="font-mono uppercase text-zinc-600">
-            Unrecorded Staff on {Calendar.strftime(@target_date, "%d %b %Y")}: {length(
-              @absent_records
-            )}
+      <%!-- Absentees --%>
+      <div
+        :if={@active_tab == :absent}
+        class="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <div class="border-b border-zinc-200 px-5 py-4 text-sm dark:border-zinc-800">
+          <span class="text-zinc-500 dark:text-zinc-400">
+            {length(@absent_records)} staff with no punches on
+            <span class="font-medium text-zinc-900 dark:text-zinc-100">
+              {Calendar.strftime(@target_date, "%d %b %Y")}
+            </span>
           </span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-zinc-100 text-zinc-600 uppercase border-b border-zinc-200">
-              <tr>
-                <th class="px-4 py-2.5">Code</th>
-                <th class="px-4 py-2.5">Employee Name</th>
-                <th class="px-4 py-2.5">Department</th>
-                <th class="px-4 py-2.5">Status</th>
+          <table class="w-full text-sm text-left text-zinc-900 dark:text-zinc-100">
+            <thead>
+              <tr class="border-b border-zinc-200 bg-zinc-50 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-400">
+                <th class="px-5 py-3">Code</th>
+                <th class="px-5 py-3">Employee</th>
+                <th class="px-5 py-3">Department</th>
+                <th class="px-5 py-3">Status</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-zinc-200 text-zinc-800">
-              <tr :for={emp <- @absent_records} class="hover:bg-zinc-50 transition">
-                <td class="px-4 py-2 font-bold text-zinc-900">{emp.emp_code}</td>
-                <td class="px-4 py-2 font-sans font-medium text-zinc-900">{emp.name}</td>
-                <td class="px-4 py-2 text-zinc-500">{emp.department || "—"}</td>
-                <td class="px-4 py-2">
-                  <span class="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
-                    Absent / Zero Punches
+            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tr
+                :for={emp <- @absent_records}
+                class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              >
+                <td class="px-5 py-3.5 font-medium tabular-nums">{emp.emp_code}</td>
+                <td class="px-5 py-3.5 font-medium">{emp.name}</td>
+                <td class="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{emp.department || "—"}</td>
+                <td class="px-5 py-3.5">
+                  <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                    Absent
                   </span>
                 </td>
               </tr>
               <tr :if={@absent_records == []}>
-                <td colspan="4" class="px-4 py-8 text-center text-emerald-600">
-                  100% Attendance recorded on this date.
+                <td colspan="4" class="px-5 py-12 text-center">
+                  <div class="mx-auto flex max-w-sm flex-col items-center gap-2">
+                    <.icon
+                      name="hero-check-circle"
+                      class="size-8 text-emerald-500 dark:text-emerald-400"
+                    />
+                    <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                      100% attendance recorded on this date
+                    </p>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -309,47 +311,55 @@ defmodule OnceWeb.AttendanceLive do
         </div>
       </div>
 
-      <%!-- Table View: Summary / Payroll --%>
-      <div :if={@active_tab == :summary} class="border border-zinc-200 bg-white">
-        <div class="px-4 py-3 bg-zinc-50 border-b border-zinc-200 flex justify-between items-center text-xs">
-          <span class="font-mono uppercase text-zinc-600">
-            Range: {Calendar.strftime(@start_date, "%d %b %Y")} — {Calendar.strftime(
-              @end_date,
-              "%d %b %Y"
-            )} ({length(@summary_records)} Active Workers)
+      <%!-- Range summary --%>
+      <div
+        :if={@active_tab == :summary}
+        class="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <div class="border-b border-zinc-200 px-5 py-4 text-sm dark:border-zinc-800">
+          <span class="text-zinc-500 dark:text-zinc-400">
+            {length(@summary_records)} active workers,
+            <span class="font-medium text-zinc-900 dark:text-zinc-100">
+              {Calendar.strftime(@start_date, "%d %b")} – {Calendar.strftime(@end_date, "%d %b %Y")}
+            </span>
           </span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-zinc-100 text-zinc-600 uppercase border-b border-zinc-200">
-              <tr>
-                <th class="px-4 py-2.5">Code</th>
-                <th class="px-4 py-2.5">Employee</th>
-                <th class="px-4 py-2.5">Department</th>
-                <th class="px-4 py-2.5 text-center">Days Present</th>
-                <th class="px-4 py-2.5 text-center">Missing Clock-Outs</th>
-                <th class="px-4 py-2.5 text-right">Total Hours</th>
+          <table class="w-full text-sm text-left text-zinc-900 dark:text-zinc-100">
+            <thead>
+              <tr class="border-b border-zinc-200 bg-zinc-50 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-400">
+                <th class="px-5 py-3">Code</th>
+                <th class="px-5 py-3">Employee</th>
+                <th class="px-5 py-3">Department</th>
+                <th class="px-5 py-3 text-center">Days present</th>
+                <th class="px-5 py-3 text-center">Missing clock-outs</th>
+                <th class="px-5 py-3 text-right">Total hours</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-zinc-200 text-zinc-800">
-              <tr :for={row <- @summary_records} class="hover:bg-zinc-50 transition">
-                <td class="px-4 py-2 font-bold text-zinc-900">{row.emp_code}</td>
-                <td class="px-4 py-2 font-sans font-medium text-zinc-900">{row.name}</td>
-                <td class="px-4 py-2 text-zinc-500">{row.department || "—"}</td>
-                <td class="px-4 py-2 text-center">{row.days_present}</td>
-                <td class="px-4 py-2 text-center">
+            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tr
+                :for={row <- @summary_records}
+                class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              >
+                <td class="px-5 py-3.5 font-medium tabular-nums">{row.emp_code}</td>
+                <td class="px-5 py-3.5 font-medium">{row.name}</td>
+                <td class="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{row.department || "—"}</td>
+                <td class="px-5 py-3.5 text-center tabular-nums">{row.days_present}</td>
+                <td class="px-5 py-3.5 text-center tabular-nums">
                   <span class={
                     if row.shifts_missing_clock_out > 0,
-                      do: "text-amber-600 font-bold",
-                      else: "text-zinc-400"
+                      do: "font-semibold text-amber-600 dark:text-amber-400",
+                      else: "text-zinc-400 dark:text-zinc-500"
                   }>
                     {row.shifts_missing_clock_out}
                   </span>
                 </td>
-                <td class="px-4 py-2 text-right font-bold text-zinc-900">{row.total_hours} hrs</td>
+                <td class="px-5 py-3.5 text-right font-semibold tabular-nums">
+                  {row.total_hours} hrs
+                </td>
               </tr>
               <tr :if={@summary_records == []}>
-                <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
+                <td colspan="6" class="px-5 py-12 text-center text-zinc-400 dark:text-zinc-500">
                   No attendance records found within this date range.
                 </td>
               </tr>
@@ -358,6 +368,29 @@ defmodule OnceWeb.AttendanceLive do
         </div>
       </div>
     </div>
+    """
+  end
+
+  defp status_badge(assigns) do
+    ~H"""
+    <span class={[
+      "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
+      @status == :normal &&
+        "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
+      @status == :multiple_punches &&
+        "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+      @status == :duplicate_checkin_no_checkout &&
+        "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+      @status == :single_punch &&
+        "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+    ]}>
+      {case @status do
+        :normal -> "OK"
+        :multiple_punches -> "Multiple punches"
+        :duplicate_checkin_no_checkout -> "Double-tap"
+        :single_punch -> "Missing exit"
+      end}
+    </span>
     """
   end
 end

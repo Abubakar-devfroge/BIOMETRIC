@@ -1,104 +1,97 @@
 <Layouts.app flash={@flash}>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <.header>
-        {@page_title}
-      </.header>
-
-      <!-- Sync Data Button -->
-      <button
-        type="button"
-        phx-click="sync_data"
-        disabled={@syncing}
-        class="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-      >
-        <svg
-          :if={@syncing}
-          class="h-4 w-4 animate-spin"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
-        </svg>
-        <svg :if={!@syncing} class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-        {if @syncing, do: "Syncing...", else: "Sync Data"}
-      </button>
-    </div>
-
-    <div>
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <form phx-change="search" phx-submit="search" class="w-full lg:max-w-md">
-          <div class="relative">
-            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <.input
-              type="text"
-              name="query"
-              value={@search_query}
-              placeholder="Search by code, employee name, department..."
-              phx-debounce="150"
-            />
-          </div>
-        </form>
-
-        <form phx-change="filter_change" class="flex flex-wrap items-center gap-2.5">
-          <div class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5">
-            <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">From</span>
-            <.input
-              type="date"
-              name="start_date"
-              value={@start_date}
-            />
-            <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">To</span>
-            <.input
-              type="date"
-              name="end_date"
-              value={@end_date}
-            />
-          </div>
-
-          <select
-            name="shift"
-            class="py-2 pl-3 pr-8 text-sm font-medium text-zinc-800 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:text-zinc-200"
+    <.header subtitle="Directory of employees synced from BioTime, with today's clock-in activity.">
+      {@page_title}
+      <:actions>
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            phx-click="sync_data"
+            disabled={@syncing}
+            class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm font-semibold text-zinc-800 shadow-xs transition-colors duration-150 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
           >
-            <option value="all" selected={@filter_shift == "all"}>All Statuses</option>
-            <option value="present" selected={@filter_shift == "present"}>Present</option>
-            <option value="in_building" selected={@filter_shift == "in_building"}>
-              In Building
-            </option>
-            <option value="completed" selected={@filter_shift == "completed"}>Completed</option>
-            <option value="absent" selected={@filter_shift == "absent"}>Absent</option>
-          </select>
-        </form>
-      </div>
+            <svg
+              :if={@syncing}
+              class="h-4 w-4 animate-spin"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            <span :if={!@syncing}>
+              <.icon name="hero-arrow-path" class="size-4" />
+            </span>
+            {if @syncing, do: "Syncing...", else: "Sync data"}
+          </button>
+
+          <.button variant="primary" navigate={~p"/employees/new"}>
+            <.icon name="hero-plus" class="size-4" /> New employee
+          </.button>
+        </div>
+      </:actions>
+    </.header>
+
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <form phx-change="search" phx-submit="search" class="w-full lg:max-w-md">
+        <div class="relative">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400">
+            <.icon name="hero-magnifying-glass" class="size-4" />
+          </div>
+          <input
+            type="text"
+            name="query"
+            value={@search_query}
+            placeholder="Search by code, employee name, department..."
+            phx-debounce="150"
+            class="w-full rounded-lg border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+      </form>
+
+      <form phx-change="filter_change" class="flex flex-wrap items-center gap-2.5">
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm text-zinc-500 dark:text-zinc-400">From</span>
+          <input
+            type="date"
+            name="start_date"
+            value={@start_date}
+            class="cursor-pointer rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 shadow-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+          <span class="text-sm text-zinc-500 dark:text-zinc-400">To</span>
+          <input
+            type="date"
+            name="end_date"
+            value={@end_date}
+            class="cursor-pointer rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 shadow-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+
+        <select
+          name="shift"
+          class="cursor-pointer rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-800 shadow-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        >
+          <option value="all" selected={@filter_shift == "all"}>All statuses</option>
+          <option value="present" selected={@filter_shift == "present"}>Present</option>
+          <option value="in_building" selected={@filter_shift == "in_building"}>
+            In building
+          </option>
+          <option value="completed" selected={@filter_shift == "completed"}>Completed</option>
+          <option value="absent" selected={@filter_shift == "absent"}>Absent</option>
+        </select>
+      </form>
     </div>
 
     <.table
@@ -111,38 +104,47 @@
       </:col>
 
       <:col :let={{_id, employee}} label="Name">
-        <div>{employee.full_name}</div>
-        <span :if={!employee.enable_att} class="text-xs font-semibold text-rose-500">
-          Attendance Disabled
+        <div class="font-medium">{employee.full_name}</div>
+        <span
+          :if={!employee.enable_att}
+          class="mt-0.5 inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+        >
+          Attendance disabled
         </span>
       </:col>
 
       <:col :let={{_id, employee}} label="Department">
-        {employee.department_name || "—"}
+        <span class="text-zinc-500 dark:text-zinc-400">{employee.department_name || "—"}</span>
       </:col>
 
-      <:col :let={{_id, employee}} label="Clock In">
-        {if employee.today_clock_in,
-          do: Calendar.strftime(employee.today_clock_in, "%I:%M:%S %p"),
-          else: "—"}
+      <:col :let={{_id, employee}} label="Clock in">
+        <span class="tabular-nums">
+          {if employee.today_clock_in,
+            do: Calendar.strftime(employee.today_clock_in, "%H:%M"),
+            else: "—"}
+        </span>
       </:col>
 
-      <:col :let={{_id, employee}} label="Clock Out">
-        {if employee.today_clock_out && employee.today_clock_out != employee.today_clock_in,
-          do: Calendar.strftime(employee.today_clock_out, "%I:%M:%S %p"),
-          else: "—"}
+      <:col :let={{_id, employee}} label="Clock out">
+        <span class="tabular-nums">
+          {if employee.today_clock_out && employee.today_clock_out != employee.today_clock_in,
+            do: Calendar.strftime(employee.today_clock_out, "%H:%M"),
+            else: "—"}
+        </span>
       </:col>
     </.table>
 
-    <div :if={@total_pages > 1} class="flex items-center justify-center gap-1.5 py-4">
+    <div :if={@total_pages > 1} class="flex items-center justify-center gap-1.5 py-2">
       <button
         :for={p <- 1..@total_pages}
         type="button"
         phx-click="goto_page"
         phx-value-page={p}
         class={[
-          "btn btn-sm min-w-8",
-          if(p == @page, do: "btn-primary", else: "btn-ghost")
+          "min-w-8 cursor-pointer rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
+          p == @page && "bg-indigo-600 text-white",
+          p != @page &&
+            "border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
         ]}
       >
         {p}

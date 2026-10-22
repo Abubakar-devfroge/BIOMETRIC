@@ -5,26 +5,31 @@ defmodule OnceWeb.EmployeeLive.Show do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash}>
-      <.header>
-        Employee {@employee.emp_code}
+      <.header subtitle="Employee record synced from BioTime.">
+        {if(@employee.first_name, do: @employee.first_name, else: "Employee")}
+        {@employee.emp_code}
 
         <:actions>
           <.button navigate={~p"/employees"}>
-            <.icon name="hero-arrow-left" />
+            <.icon name="hero-arrow-left" class="size-4" /> Back
           </.button>
           <.button variant="primary" navigate={~p"/employees/#{@employee}/edit?return_to=show"}>
-            <.icon name="hero-pencil-square" /> Edit Employee
+            <.icon name="hero-pencil-square" class="size-4" /> Edit employee
           </.button>
         </:actions>
       </.header>
 
-      <.list>
-        <:item title="First name">{@employee.first_name}</:item>
-
-        <:item title="Department name">{@employee.department_name}</:item>
-
-        <:item title="Area name">{@employee.area_name}</:item>
-      </.list>
+      <div class="max-w-2xl">
+        <.list>
+          <:item title="First name">{@employee.first_name || "—"}</:item>
+          <:item title="Last name">{@employee.last_name || "—"}</:item>
+          <:item title="Department">{@employee.department_name || "—"}</:item>
+          <:item title="Area">{@employee.area_name || "—"}</:item>
+          <:item title="Attendance tracking">
+            {if @employee.enable_att, do: "Enabled", else: "Disabled"}
+          </:item>
+        </.list>
+      </div>
     </Layouts.app>
     """
   end

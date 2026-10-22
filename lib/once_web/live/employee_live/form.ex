@@ -5,46 +5,36 @@ defmodule OnceWeb.EmployeeLive.Form do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash}>
-      <.header>
+      <.header subtitle="Manage employee records in your database.">
         {@page_title}
-        <:subtitle>Use this form to manage employee records in your database.</:subtitle>
       </.header>
 
       <.form
         for={@form}
         id="employee-form"
+        class="max-w-2xl rounded-xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
         phx-change="validate"
         phx-submit="save"
       >
-        <%= if @form.source.type == :create do %>
-          <.input field={@form[:emp_code]} type="text" label="Emp code" /><.input
-            field={@form[:first_name]}
-            type="text"
-            label="First name"
-          /><.input field={@form[:last_name]} type="text" label="Last name" /><.input
-            field={@form[:department_name]}
-            type="text"
-            label="Department name"
-          /><.input field={@form[:area_name]} type="text" label="Area name" /><.input
-            field={@form[:biotime_id]}
-            type="text"
-            label="Biotime"
-          /><.input field={@form[:enable_att]} type="checkbox" label="Enable att" />
-        <% end %>
-        <%= if @form.source.type == :update do %>
-          <.input field={@form[:first_name]} type="text" label="First name" /><.input
-            field={@form[:last_name]}
-            type="text"
-            label="Last name"
-          /><.input field={@form[:department_name]} type="text" label="Department name" /><.input
-            field={@form[:area_name]}
-            type="text"
-            label="Area name"
-          /><.input field={@form[:enable_att]} type="checkbox" label="Enable att" />
-        <% end %>
+        <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+          <%= if @form.source.type == :create do %>
+            <.input field={@form[:emp_code]} type="text" label="Employee code" />
+            <.input field={@form[:biotime_id]} type="text" label="BioTime ID" />
+          <% end %>
 
-        <.button phx-disable-with="Saving..." variant="primary">Save Employee</.button>
-        <.button navigate={return_path(@return_to, @employee)}>Cancel</.button>
+          <.input field={@form[:first_name]} type="text" label="First name" />
+          <.input field={@form[:last_name]} type="text" label="Last name" />
+          <.input field={@form[:department_name]} type="text" label="Department" />
+          <.input field={@form[:area_name]} type="text" label="Area" />
+          <.input field={@form[:enable_att]} type="checkbox" label="Enable attendance tracking" />
+        </div>
+
+        <div class="mt-6 flex items-center gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+          <.button phx-disable-with="Saving..." variant="primary" type="submit">
+            Save employee
+          </.button>
+          <.button navigate={return_path(@return_to, @employee)}>Cancel</.button>
+        </div>
       </.form>
     </Layouts.app>
     """

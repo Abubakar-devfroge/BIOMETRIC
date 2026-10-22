@@ -43,7 +43,11 @@ defmodule OnceWeb.Router do
   scope "/", OnceWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    ash_authentication_live_session :home,
+      on_mount: [{OnceWeb.LiveUserAuth, :live_user_optional}] do
+      live "/", DashboardLive
+    end
+
     auth_routes AuthController, Once.Accounts.User, path: "/auth"
 
     sign_out_route AuthController, "/sign-out",

@@ -35,11 +35,9 @@ defmodule OnceWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <main class="px-4 py-10 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-5xl">
-        {render_slot(@inner_block)}
-      </div>
-    </main>
+    <div class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {render_slot(@inner_block)}
+    </div>
 
     <.flash_group flash={@flash} />
     """
@@ -101,31 +99,40 @@ defmodule OnceWeb.Layouts do
   """
   def theme_toggle(assigns) do
     ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
-      <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 [[data-theme-source=system]_&]:!left-0 transition-[left]" />
+    <div class="relative flex w-28 shrink-0 items-center rounded-full border border-zinc-200 bg-zinc-50 p-0.5 dark:border-zinc-700 dark:bg-zinc-800">
+      <div class={[
+        "absolute top-0.5 left-0.5 h-[calc(100%-4px)] w-[calc((100%-4px)/3)] rounded-full bg-white shadow-sm dark:bg-zinc-600 transition-transform duration-150",
+        "[[data-theme=light]_&]:translate-x-[100%]",
+        "[[data-theme=dark]_&]:translate-x-[200%]",
+        "[[data-theme-source=system]_&]:translate-x-0"
+      ]}>
+      </div>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="relative z-10 grid w-1/3 cursor-pointer place-items-center py-1.5"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="system"
+        aria-label="System theme"
       >
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-computer-desktop-micro" class="size-4 text-zinc-600 dark:text-zinc-300" />
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="relative z-10 grid w-1/3 cursor-pointer place-items-center py-1.5"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
+        aria-label="Light theme"
       >
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-sun-micro" class="size-4 text-zinc-600 dark:text-zinc-300" />
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="relative z-10 grid w-1/3 cursor-pointer place-items-center py-1.5"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
+        aria-label="Dark theme"
       >
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-moon-micro" class="size-4 text-zinc-600 dark:text-zinc-300" />
       </button>
     </div>
     """
