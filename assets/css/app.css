@@ -17,6 +17,37 @@
 /* daisyUI bundle imported directly from vendor */
 @import "../vendor/daisyui.min.css";
 
+/* Inter — self-hosted variable font (OFL), the open equivalent of Stripe's Söhne */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  font-optical-sizing: auto;
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+}
+
+@theme {
+  --font-sans: "Inter", "Inter var", ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+}
+
+/* Stripe-style typography: optical sizing, crisp antialiasing, tightened tracking */
+body {
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.006em;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.02em;
+}
+
 /* daisyUI Light Theme (Default) */
 :root,
 [data-theme="light"] {
