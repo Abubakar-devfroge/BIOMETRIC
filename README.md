@@ -1,18 +1,37 @@
-# Once
+# Once — Biometric Attendance System
 
-To start your Phoenix server:
+Real-time biometric attendance tracking and payroll-ready reporting, built with Elixir and Phoenix LiveView.
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+![Once — landing page](docs/screenshots/landing.png)
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## What it does
 
-Ready to run in production? Please [check our deployment guides](https://phoenix.hexdocs.pm/deployment.html).
+- **⏱ Live attendance from biometric devices** — a background sync worker pulls punches from connected devices into Postgres
+- **📊 Real-time dashboard** — LiveView-driven presence tracking, per-employee drill-down and absent counts
+- **📄 Payroll-ready reports** — report aggregation and absent counting are pushed into SQL (`NOT IN`, select trimming), not filtered in memory
+- **🏢 Multi-tenant** — data isolated per client organization
 
-## Learn more
+## Live demo
 
-* Official website: https://www.phoenixframework.org/
-* Guides: https://phoenix.hexdocs.pm/overview.html
-* Docs: https://phoenix.hexdocs.pm
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+→ [https://biometric.fly.dev/](https://biometric.fly.dev/)
+
+Access is provisioned per organization — **request credentials at info.devforge@gmail.com**.
+
+## Stack
+
+Elixir · Phoenix LiveView · PostgreSQL · Tailwind CSS · Fly.io · Docker
+
+## Run locally
+
+```sh
+mise install
+just dev   # or: docker compose up
+```
+
+Then visit [http://localhost:4000](http://localhost:4000).
+
+## Engineering notes
+
+- Report queries derived in SQL rather than the app layer — `NOT IN`-based absent counting and trimmed report selects keep views fast
+- Composite index on `punch_time` to keep the punch-heavy table performant
+- LiveView idle reconnects on Fly.io fixed by keeping one warm machine running
